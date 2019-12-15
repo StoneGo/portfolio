@@ -2,8 +2,16 @@
 // Created by stone on 11/12/19.
 //
 
-#include <uv.h>
+// #include <uv.h>
+
 #include "portfolio.h"
+
+typedef uint64_t uv_timeval64_t;
+
+uv_timeval64_t tv;
+void uv_gettimeofday(uv_timeval64_t* tv) {
+    UNUSED(tv);
+}
 
 namespace portfolio {
 
@@ -46,8 +54,8 @@ Session* terminal_online(const char* raw_sid, const char* opname,
   s->op = gOperatorMap[opname];
   s->instance = si;
   snprintf(s->raw_sid, SESSION_ID_LENGTH, raw_sid);
-  s->sid = tv.tv_sec * 1000 + tv.tv_usec / 1000;
-  s->last_act = s->start_time = static_cast<time_t>(tv.tv_sec);
+  // s->sid = tv.tv_sec * 1000 + tv.tv_usec / 1000;
+  // s->last_act = s->start_time = static_cast<time_t>(tv.tv_sec);
   s->end_time = 0;
   s->set_network_params(fd);
 

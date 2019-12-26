@@ -27,7 +27,7 @@ void test_vector_ctpmd() {
   p = cd2[0];
   printf("3. %lf, %lf, %lf, %d, %d, %d, %lf\n", p.lp, p.ap, p.bp, p.lv, p.av, p.bv, p.ft);
 
-  SharedCtpmdData cd3(cd2.get_data_ptr(), 100);
+  SharedCtpmdData cd3(cd2.get_data_info_ptr(), cd2.get_data_ptr(), 100);
   printf("4. %lu, %lu\n", cd3.get_data_ptr(), cd2.get_data_ptr());
   p = *(cd3.get_data_ptr());
   printf("5. %lf, %lf, %lf, %d, %d, %d, %lf\n", p.lp, p.ap, p.bp, p.lv, p.av, p.bv, p.ft);

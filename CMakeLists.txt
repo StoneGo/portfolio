@@ -1,5 +1,5 @@
-cmake_minimum_required(VERSION 3.15)
-project(CTPAPI VERSION 0.1 DESCRIPTION "ctpaip")
+cmake_minimum_required(VERSION 3.0)
+project(portfolio VERSION 0.1 DESCRIPTION "portfolio")
 
 set(CMAKE_CXX_STANDARD 17)
 

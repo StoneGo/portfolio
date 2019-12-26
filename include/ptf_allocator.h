@@ -78,28 +78,45 @@ uint8_t get_size_by_type(SHARED_DATA_TYPE t) {
   return s;
 }
 
+// the size-infomation
+typedef struct DataSizeInfo {
+    size_t amount_of_member = 0;  // amout of member of a data struct or class
+    size_t size_of_data = 0;      // the size of one data
+    size_t max_size = 0;          // the capability of memory-block
+    size_t size = 0;              // the size in current dataset
+} DataSize;
 
 // Interface
 class DataInfo {
 public:
-  DataInfo() {}
-
-  virtual ~DataInfo() {}
+  DataInfo() {
+    dsi = new DataSizeInfo;
+    my_dsi = true;
+  }
+  DataInfo(DataSizeInfo* dsi) : dsi(dsi), my_dsi(false) { }
+  virtual ~DataInfo() { if (my_dsi) SafeDeletePtr(dsi); }
 
   std::vector<uint8_t> &get_field_size() { return field_size; }
   std::vector<SHARED_DATA_TYPE> &get_field_type() { return field_type; }
-  size_t get_amount_of_member() { return amount_of_member; }
-  size_t get_size_of_data() { return size_of_data; }
+  size_t get_amount_of_member() { return dsi->amount_of_member; }
+  size_t get_size_of_data() { return dsi->size_of_data; }
+  size_t size() { return  dsi->size; }
+  size_t max_size() { return dsi->max_size; }
+
+  DataSizeInfo* get_data_info_ptr() { return dsi; }
+  void set_data_info_ptr(DataSizeInfo* dsi) {this->dsi = dsi; my_dsi = false;}
+
+public:
+  DataSizeInfo* dsi = nullptr;
 
 protected:
   virtual void set_amount_of_member() = 0;
   virtual void set_size_of_data() = 0;
   virtual void set_field_type() = 0;
 
+  bool my_dsi = false;
   std::vector<uint8_t> field_size;
   std::vector<SHARED_DATA_TYPE> field_type;
-  size_t amount_of_member = 0;
-  size_t size_of_data = 0;
 };
 
 typedef struct CTPMD {
@@ -123,8 +140,8 @@ public:
   virtual ~CTPMDInfo() {}
 
 private:
-  virtual void set_amount_of_member() { amount_of_member = 5; }
-  virtual void set_size_of_data() { size_of_data = sizeof(CTPMD); }
+  virtual void set_amount_of_member() { dsi->amount_of_member = 5; }
+  virtual void set_size_of_data() { dsi->size_of_data = sizeof(CTPMD); }
   virtual void set_field_type() {
     field_type = {
       SHARED_DATA_TYPE_DOUBLE, SHARED_DATA_TYPE_DOUBLE, SHARED_DATA_TYPE_DOUBLE,
@@ -137,49 +154,54 @@ private:
   }
 };
 
-template<typename T, class Tinfo>
+template<typename T, class TInfo>
 class SharedMemDataset {
 public:
   SharedMemDataset() {}
 
   SharedMemDataset(size_t size) {
+    char* buf = new char[sizeof(T) * size + sizeof(TInfo)];
+    info = reinterpret_cast<TInfo*>(buf);
+    data = reinterpret_cast<T*>(buf + sizeof(TInfo));
     writable = true;
-    data = new T[size];
     vec = new SharedMemVector<T>(0, PreAllocator<T>(data, size));
   }
 
-  SharedMemDataset(T* data, size_t size) {
-    writable = false;
-    this->data = data;
+  SharedMemDataset(TInfo* info, T* data, size_t size)
+    : writable(false) , info(info), data(data) {
     vec = new SharedMemVector<T>(0, PreAllocator<T>(this->data, size));
   }
 
   virtual ~SharedMemDataset() {
     SafeDeletePtr(vec);
-    if (writable)
-      SafeDeleteAry(data);
+    if (writable) {
+      char * buf = reinterpret_cast<char *>(info);
+      SafeDeleteAry(buf);
+    } else {
+      info = nullptr;
+    }
     data = nullptr;
   }
 
-  DataInfo &get_data_info() { return tinfo; }
-
+  TInfo* get_data_info_ptr() {return info;}
   T* get_data_ptr() { return data; }
 
   void push_back(T& t) {
     if (writable) {
       vec->push_back(t);
-      data_size = vec->size();
+      info->dsi->size = vec->size();
     }
   }
 
-  size_t size() { return data_size; }
+  size_t size() { return info->dis->data_size; }
 
   void resize(size_t size) {
     if (writable) {
-      // vec->resize(size);
-      // data_size = size;
-    } else
-      data_size = size;
+      vec->resize(size);
+      info->dsi->size = size;
+    } else {
+      info->dsi->size = size;
+    }
   }
 
   T& operator[](uint64_t i) {
@@ -189,12 +211,18 @@ public:
       return data[i];
   }
 
+  T& at(uint64_t i) {
+    if (writable)
+      return vec->at(i);
+    else
+      return data[i];
+  }
+
 public:
   bool writable = false;
-  SharedMemVector<T>* vec = nullptr;
+  TInfo* info = nullptr;
   T* data = nullptr;
-  size_t data_size = 0;
-  Tinfo tinfo;
+  SharedMemVector<T>* vec = nullptr;
 };
 
 using SharedCtpmdData = SharedMemDataset<CTPMD, CTPMDInfo>;

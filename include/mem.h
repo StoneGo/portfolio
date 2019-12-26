@@ -112,21 +112,14 @@ namespace portfolio {
 class PORTFOLIO_API MemMapping : public SharedMemory {
 public:
   MemMapping();
-
   ~MemMapping();
 
   void Delete();
-
   int OpenRead(const char *memname, size_t nFileSize = 0);
-
   int OpenWrite(const char *filepath, const char *memname, size_t nFileSize);
-
   int CloseFile();
-
   bool IsValidFile();
-
   void *GetDataPtr();
-
   key_t getKey() { return _key; }
 
 private:

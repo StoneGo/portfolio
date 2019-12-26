@@ -12,9 +12,9 @@ static void test_allocator(int *arr, IntVector &vec) {
   std::cout << arr << ", " << vec.data() << ", " << (arr == vec.data()) << "\n";
   std::cout << "My_Vec[0]: " << vec[0] << "\n";
   std::cout << "My_Arr[0]: " << arr[0] << "\n";
-  std::cout << vec.size() << ", " << vec.max_size() << "\n";
+  std::cout << "size: " << vec.size() << ", " << vec.max_size() << "\n";
   vec.resize(10);
-  std::cout << vec.size() << ", " << vec.max_size() << "\n";
+  std::cout << "resize: " << vec.size() << ", " << vec.max_size() << "\n";
   for (size_t i = 0; i < vec.size(); ++i)
     std::cout << vec[i] << ", ";
   std::cout << "\n";
@@ -91,11 +91,11 @@ public:
 
 int main() {
   // main_1();
-  main_2();
+  // main_2();
 
-  printf("test_vector_ctpmd\n");
+  printf("test_vector_ctpmd start\n");
   portfolio::test_vector_ctpmd();
-  printf("test_vector_ctpmd\n");
+  printf("test_vector_ctpmd end\n");
 
   return 0;
 }
